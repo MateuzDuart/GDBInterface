@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise do Binário</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/analyse.css') }}">
+    <script src="{{ url_for('static', filename='js/render.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/gdb.js') }}"></script>
+</head>
+
+<body onload="setSessionCookie('{{ instance_id }}'); renderSection('cpu')">
+    <div class="header">
+        <div class="navbar">
+            <div class="menu">
+                <button onclick="renderSection('cpu')">CPU</button>
+                <button onclick="renderSection('breakpoints')">Breakpoints</button>
+                <button onclick="renderSection('callstack')">Call Stack</button>
+            </div>
+            <div class="debug-controls">
+                <button onclick="sendDebugCommand('step')">Step (F10)</button>
+                <button onclick="sendDebugCommand('stepi')">StepI (CRTL + F10)</button>
+                <button onclick="sendDebugCommand('next')">Next (F11)</button>
+                <button onclick="sendDebugCommand('nexti')">NextI (CRTL + F11)</button>
+                <button onclick="sendDebugCommand('run')">Run</button>
+                <button onclick="sendDebugCommand('continue')">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="render-area"></div>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #1e1e1e;
+  color: #ccc;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  background-color: #333;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0px 0px 10px 2px #000;
+}
+
+h1 {
+  color: #ffcc00;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #ffcc00;
+}
+
+select, input[type="text"], input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #444;
+  color: #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+button[type="submit"] {
+  background-color: #2ecc71;
+  color: #1e1e1e;
+}
+
+button.connect-btn {
+  background-color: #2ecc71;
+  color: #1e1e1e;
+}
+
+button.terminate-btn {
+  background-color: #e74c3c;
+  color: #1e1e1e;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.messages {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.messages li {
+  background-color: #444;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.messages li.success {
+  color: #2ecc71;
+}
+
+.messages li.error {
+  color: #e74c3c;
+}
+
+h2 {
+  color: #ffcc00;
+  margin-bottom: 10px;
+}
+
+ul#session-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul#session-list li {
+  background-color: #444;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.hidden {
+  display: none;
+}

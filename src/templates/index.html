@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDB Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Conectar com GDB</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <label for="gdb_command">Você vai conectar com:</label>
+            <select id="gdb_command" name="gdb_command" required>
+                <option value="">-- Selecione --</option>
+                <option value="gdb">Arquivo</option>
+                <option value="gdbserver">GDB Server</option>
+            </select>
+
+            <div id="gdbFields" class="form-section hidden">
+                <label for="file">Selecionar Arquivo Executável:</label>
+                <input type="file" id="file" name="file" aria-label="Selecionar Arquivo Executável">
+            </div>
+
+            <div id="gdbserverFields" class="form-section hidden">
+                <label for="ip">IP:</label>
+                <input type="text" id="ip" name="ip" placeholder="e.g., 127.0.0.1" aria-label="Endereço IP">
+                
+                <label for="port">Porta:</label>
+                <input type="text" id="port" name="port" placeholder="e.g., 1234" aria-label="Porta">
+            </div>
+
+            <button type="submit" class="submit-btn">Conectar</button>
+        </form>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="messages">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Sessões Ativas -->
+        <h2>Sessões Ativas</h2>
+        <ul id="session-list" class="session-list">
+            {% for session in sessions %}
+            <li class="session-item">
+                <span>Sessão ID: {{ session['id'] }}</span>
+                <button class="connect-btn" onclick="connectToSession(`{{ session['id'] }}`)">Conectar</button>
+                <button class="terminate-btn" onclick="terminateSession(`{{ session['id'] }}`)">Terminar</button>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('gdb_command').addEventListener('change', function() {
+            const selectedCommand = this.value;
+            document.getElementById('gdbFields').classList.add('hidden');
+            document.getElementById('gdbserverFields').classList.add('hidden');
+
+            if (selectedCommand === 'gdb') {
+                document.getElementById('gdbFields').classList.remove('hidden');
+            } else if (selectedCommand === 'gdbserver') {
+                document.getElementById('gdbserverFields').classList.remove('hidden');
+            }
+        });
+
+        function connectToSession(sessionId) {
+            window.location.href = `/analysis/${sessionId}`;
+        }
+
+        function terminateSession(sessionId) {
+            fetch(`/terminate/${sessionId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Erro ao terminar a sessão.');
+                    }
+                })
+                .catch(error => console.error('Erro:', error));
+        }
+    </script>
+</body>
+</html>
