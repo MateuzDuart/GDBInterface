@@ -31,9 +31,11 @@ def index():
                 instance_id = GDBManager.create_session()
                 session_data = GDBManager.get_session(instance_id)
                 gdb_instance = session_data["gdb_instance"]
-                connection_status, resp_data = gdb_instance.send_command(f"target remote {ip}:{port}")
+                command = f"target remote {ip}:{port}"
+                connection_status, resp_data = gdb_instance.send_command(command)
                 if connection_status == GDBStatus.SUCCESS:
                     flash("Conexão concluída com sucesso.", "success")
+                    GDBManager.add_commands(instance_id, command)
                     return redirect(url_for('analysis', instance_id=instance_id, section_name="cpu"))
                 else:
                     GDBManager.terminate_section(instance_id)
@@ -124,10 +126,15 @@ def recive_commands(instance_id):
     
     command = request.form.get("command")
     
+    
     if not command:
         return jsonify({"error": "Nenhum comando fornecido."}), 400
     
-    gdb_instance = session["gdb_instance"]
+    if command == "restart":
+        GDBManager.restart_pipe(instance_id)
+        return 
+
+    gdb_instance = session["gdb_instance"]    
     resp_status, output = gdb_instance.send_command(command)
     
     if resp_status == GDBStatus.SUCCESS:
@@ -138,7 +145,7 @@ def recive_commands(instance_id):
         return jsonify({"status": "running", "output": output})
     elif resp_status == GDBStatus.FINALIZED:
         # Finalizar e remover a sessão se o processo GDB foi encerrado
-        GDBManager.terminate_section(instance_id)
+        GDBManager.close_gdb_pipe(instance_id)
         return jsonify({"status": "finalized", "output": output})
     else:
         return jsonify({"status": "undefined", "output": output})

@@ -1,6 +1,7 @@
 import subprocess, re, uuid, threading, queue, json, os
 from enum import Enum
 from filelock import FileLock
+from erros.gdbErrors import Closed_pipe
 
 class GDBStatus(Enum):
     SUCCESS = "^done"
@@ -40,21 +41,20 @@ class GDBManager:
         # Checa se já existe uma instância do GDB para essa sessão na memória
         if session_id in GDBManager.instances:
             gdb_instance = GDBManager.instances[session_id]
-        else:
-            # Se não existir, cria uma nova instância do GDB
+            if not gdb_instance:
+               raise Closed_pipe("A sessão finalizou, reinicialize.")
+            
             session_file = os.path.join(GDBManager.base_path, session_id, "session.json")
-            if not os.path.exists(session_file):
-                return None
-
             with open(session_file, "r") as file:
                 session_data = json.load(file)
+            return {"data": session_data, "gdb_instance": gdb_instance}
+        else:
+            session_data = GDBManager.init_section(session_id)
+            
+            if not session_data:
+                return None
 
-            gdb_instance = GDB("D:\\android-NDK\\prebuilt\\windows-x86_64\\bin\\gdb.exe")
-            gdb_instance.start()
-            GDBManager.instances[session_id] = gdb_instance  # Armazena a instância
-
-        session_data = GDBManager.load_session(session_id)
-        return {"data": session_data, "gdb_instance": gdb_instance}
+            return session_data
 
     @staticmethod
     def save_session(session_id, data):
@@ -86,6 +86,18 @@ class GDBManager:
         return sessions
     
     @staticmethod
+    def init_section(session_id):
+        session_file = os.path.join(GDBManager.base_path, session_id, "session.json")
+        if not os.path.exists(session_file):
+            return None
+            
+        with open(session_file, "r") as file:
+            session_data = json.load(file)
+
+        gdb_instance = GDBManager.init_pipe(session_id, session_data["commands"], session_data["breakpoints"])
+        
+        return {"data": session_data, "gdb_instance": gdb_instance}
+    @staticmethod
     def terminate_section(session_id):
         # Termina a sessão GDB e remove a instância da memória
         if session_id in GDBManager.instances:
@@ -100,14 +112,11 @@ class GDBManager:
         return False
 
     @staticmethod
-    def update_session(session_id, update_data):
+    def add_commands(session_id, command):
         session_data = GDBManager.load_session(session_id)
-        if not session_data:
-            return None
-
-        session_data.update(update_data)
+        session_data["commands"].append(command)
+        
         GDBManager.save_session(session_id, session_data)
-        return session_data
 
     @staticmethod
     def add_breakpoint(session_id, breakpoint):
@@ -141,7 +150,50 @@ class GDBManager:
         GDBManager.save_session(session_id, session_data["data"])
         return session_data
     
+    @staticmethod
+    def init_pipe(session_id, commands=[], breakpoints=[]):
+        if session_id in GDBManager.instances:
+            gdb_instance = GDBManager.instances[session_id]
+            if gdb_instance:
+                return gdb_instance
+        
+        gdb_instance = GDB("D:\\android-NDK\\prebuilt\\windows-x86_64\\bin\\gdb.exe")
+        gdb_instance.start()
+        GDBManager.instances[session_id] = gdb_instance  # Armazena a instância
+        
+        for command in commands:
+            gdb_instance.send_command(command)
+        for breakpoint in breakpoints:
+            gdb_instance.send_command(f"break *{breakpoint}")
+        
+        return gdb_instance
+    
+    @staticmethod
+    def restart_pipe(session_id):
+        if session_id in GDBManager.instances: 
+            gdb_instance = GDBManager.instances[session_id]
+            if gdb_instance:
+                GDBManager.close_gdb_pipe(session_id)
+            
+            session_file = os.path.join(GDBManager.base_path, session_id, "session.json")
+            if not os.path.exists(session_file):
+                return None
+                
+            with open(session_file, "r") as file:
+                session_data = json.load(file)
 
+            gdb_instance = GDBManager.init_pipe(session_id, session_data["commands"], session_data["breakpoints"])
+                
+            return True
+        return False
+    
+    @staticmethod
+    def close_gdb_pipe(session_id):
+        gdb_instance = GDBManager.instances[session_id]
+        if gdb_instance:
+            gdb_instance.terminate()
+            GDBManager.instances[session_id] = None
+    
 class GDB:
     def __init__(self, gdb_path, mi_version="mi2"):
         self.gdb_command = [gdb_path, "-q", f"--interpreter={mi_version}"]

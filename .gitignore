@@ -1,2 +1,5 @@
 venv
 teste.py
+sections
+.vscode
+__pycache__

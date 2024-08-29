@@ -19,12 +19,13 @@
                 <button onclick="renderSection('callstack')">Call Stack</button>
             </div>
             <div class="debug-controls">
+                <button onclick="sendDebugCommand('restart')">Restart (F2)</button>
                 <button onclick="sendDebugCommand('step')">Step (F10)</button>
                 <button onclick="sendDebugCommand('stepi')">StepI (CRTL + F10)</button>
                 <button onclick="sendDebugCommand('next')">Next (F11)</button>
                 <button onclick="sendDebugCommand('nexti')">NextI (CRTL + F11)</button>
                 <button onclick="sendDebugCommand('run')">Run</button>
-                <button onclick="sendDebugCommand('continue')">Continue</button>
+                <button onclick="sendDebugCommand('continue')">Continue (F9)</button>
             </div>
         </div>
     </div>

@@ -1,3 +1,26 @@
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.key === 'F10') {
+        // Ctrl + F10 para stepi
+        sendDebugCommand('stepi');
+        event.preventDefault(); // Previne o comportamento padrão, se houver
+    } else if (event.key === 'F10') {
+        // F10 para step
+        sendDebugCommand('step');
+        event.preventDefault(); // Previne o comportamento padrão, se houver
+    } else if (event.ctrlKey && event.key === 'F11') {
+        // Ctrl + F11 para nexti
+        sendDebugCommand('nexti');
+        event.preventDefault(); // Previne o comportamento padrão, se houver
+    } else if (event.key === 'F11') {
+        // F11 para next
+        sendDebugCommand('next');
+        event.preventDefault(); // Previne a entrada em tela cheia
+    } else if (event.key === 'F9') {
+        // F2 para continue
+        sendDebugCommand('continue');
+        event.preventDefault(); // Previne o comportamento padrão, se houver
+    }
+});
 const activeSubsections = [];
 
 function renderSection(section) {
