@@ -16,10 +16,17 @@
             <div class="menu">
                 <button onclick="renderSection('cpu')">CPU</button>
                 <button onclick="renderSection('breakpoints')">Breakpoints</button>
-                <button onclick="renderSection('callstack')">Call Stack</button>
+                <button onclick="renderSection('functions')">Functions</button>
             </div>
+
+            <div class="status-indicator">
+                <div class="status-box" id="status-box"></div>
+                <span id="status-text">Paused</span>
+            </div>
+            
+
             <div class="debug-controls">
-                <button onclick="sendDebugCommand('restart')">Restart (F2)</button>
+                <button onclick="restartGDB()">Restart (F2)</button>
                 <button onclick="sendDebugCommand('step')">Step (F10)</button>
                 <button onclick="sendDebugCommand('stepi')">StepI (CRTL + F10)</button>
                 <button onclick="sendDebugCommand('next')">Next (F11)</button>

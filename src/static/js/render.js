@@ -1,4 +1,4 @@
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', function (event) {
     if (event.ctrlKey && event.key === 'F10') {
         // Ctrl + F10 para stepi
         sendDebugCommand('stepi');
@@ -24,22 +24,23 @@ document.addEventListener('keydown', function(event) {
 const activeSubsections = [];
 
 function renderSection(section) {
-    
     setCookie("section_name", section)
     const instanceId = getSessionCookie();
     const url = `/section/${section}/${instanceId}`;
-
+    
     fetch(url)
         .then(response => {
             if (response.ok) {
                 return response.text();
             }
-            throw new Error('Seção não encontrada');
         })
         .then(data => {
             const renderArea = document.getElementById('render-area');
             renderArea.innerHTML = data;
             const subsections = renderArea.querySelectorAll(".main-layout > div");
+            
+            updateStatus(true)
+            activeSubsections.length = 0
             subsections.forEach((subsection) => {
                 const subsectionName = subsection.getAttribute('subsectionname');
                 loadSectionData(section, subsectionName);
@@ -51,6 +52,7 @@ function renderSection(section) {
                     toggleSubsection(headerElement);
                 };
             });
+            updateStatus(false)
         })
         .catch(error => console.error('Erro ao carregar a seção:', error));
 }
@@ -59,7 +61,6 @@ function loadSectionData(section, subsection) {
     const instanceId = getSessionCookie();
     const url = `/section/${section}/${instanceId}/${subsection}`;
     actualSection = section;
-    
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -75,6 +76,12 @@ function loadSectionData(section, subsection) {
                     break;
                 case 'stack':
                     renderStack(data);
+                    break;
+                case 'functions':
+                    renderFunctions(data);
+                    break;
+                case 'backtrace':
+                    renderBacktrace(data);
                     break;
                 default:
                     console.warn('Subseção não identificada:', subsection);
@@ -97,12 +104,12 @@ function toggleSubsection(headerElement) {
 }
 
 function setSessionCookie(sessionId) {
-    setCookie("session_id", sessionId)    
+    setCookie("session_id", sessionId)
 }
 
 function getCookie(cookieName) {
-    cookieName += "=" 
-    
+    cookieName += "="
+
     const decodedCookie = decodeURIComponent(document.cookie);
     const cookieArray = decodedCookie.split(';');
     for (let i = 0; i < cookieArray.length; i++) {
@@ -116,7 +123,7 @@ function getCookie(cookieName) {
 
 function setCookie(cookieName, data) {
     const expirationDays = 2;
-    
+
     const date = new Date();
     date.setTime(date.getTime() + (expirationDays * 24 * 60 * 60 * 1000));
     const expires = "expires=" + date.toUTCString();
@@ -124,15 +131,41 @@ function setCookie(cookieName, data) {
 }
 
 function getSessionCookie() {
-    return getCookie('session_id')    
+    return getCookie('session_id')
 }
+
+function escapeHTML(str) {
+    return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function filterFunctions(inputElement) {
+    const filter = inputElement.value.toLowerCase();
+    const filterContainer = inputElement.parentElement; // O container pai do input
+    const searchByAddress = filterContainer.querySelector('#address-checkbox').checked; // O estado do checkbox
+    const functions = document.querySelectorAll('.function-line');
+    
+    functions.forEach(func => {
+        const functionName = func.querySelector('.function-name').textContent.toLowerCase();
+        const functionAddress = func.querySelector('.function-address').textContent.toLowerCase();
+
+        // Verifica se deve filtrar por nome ou por endereço
+        const match = searchByAddress ? functionAddress.includes(filter) : functionName.includes(filter);
+
+        if (match) {
+            func.style.display = ''; // Mostrar a função
+        } else {
+            func.style.display = 'none'; // Ocultar a função
+        }
+    });
+}
+
 
 // ------- render functions -----------
 
 function renderDisassembly(data) {
     const disassemblyContent = document.querySelector('.disassembly-content');
     disassemblyContent.innerHTML = ''; // Limpa o conteúdo anterior
-    
+
     data.forEach(line => {
         const div = document.createElement('div');
         div.className = 'disassembly-line';
@@ -140,19 +173,19 @@ function renderDisassembly(data) {
         // Verifica se a linha é a linha atual ou se é um breakpoint
         const isCurrentLine = line[0];
         const isBreakpoint = line[1];
-        
+
         div.innerHTML = `
             <span class="address ${isCurrentLine ? 'highlight' : ''} ${isBreakpoint ? 'breakpoint' : ''}" data-address="${line[2]}">${line[2]}</span>
             <span class="offset">${line[3]}</span>
             <span class="instruction">${line[4]}</span> 
             <span class="arguments">${line[5]}</span>
         `;
-        
+
         disassemblyContent.appendChild(div);
 
         // Adicionar event listener ao endereço para gerenciar breakpoints
         const addressElement = div.querySelector('.address');
-        addressElement.addEventListener('dblclick', function() {
+        addressElement.addEventListener('dblclick', function () {
             toggleBreakpoint(addressElement);
         });
     });
@@ -192,5 +225,44 @@ function renderStack(data) {
         const li = document.createElement('li');
         li.textContent = frame;
         stackContent.appendChild(li);
+    });
+}
+
+function renderFunctions(data) {
+    const functionsContent = document.querySelector('.functions-content');
+    functionsContent.innerHTML = ''; // Limpa o conteúdo anterior
+    
+    data.forEach(func => {
+        const escapedName = escapeHTML(func.name); // Escapa os caracteres especiais
+        const display_name = func.name.length > 30 ? escapedName.slice(0, 30) + '...' : escapedName;
+        
+        const div = document.createElement('div');
+        div.className = 'function-line';
+        div.innerHTML = `
+            <span class="function-name" data-full-name="${escapedName}">${display_name}</span>
+            <span class="function-address">${func.address}</span>
+        `;
+        
+        // Adiciona o event listener de duplo clique
+        div.addEventListener('dblclick', () => {
+            loadDisassemblyForFunction(func.name);
+        });
+
+        functionsContent.appendChild(div);
+    });
+}
+
+function renderBacktrace(data) {
+    const backtraceContent = document.querySelector('.backtrace-content ul');
+    backtraceContent.innerHTML = ''; // Limpa o conteúdo anterior
+    data.forEach(frame => {
+        const li = document.createElement('li');
+        li.className = 'backtrace-frame';
+        li.innerHTML = `
+            <span class="frame-number">${frame.framePosition}</span>
+            <span class="frame-function">${frame.function}</span>
+            <span class="frame-address">${frame.address}</span>
+        `;
+        backtraceContent.appendChild(li);
     });
 }
