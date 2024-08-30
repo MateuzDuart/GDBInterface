@@ -127,6 +127,66 @@ def load_cpu_subsection(instance_id, subsection):
     else:
         return jsonify({"error": "Subseção não encontrada."}), 404
 
+@app.route("/section/hex/<string:instance_id>")
+def load_hex_section(instance_id):
+    session = GDBManager.get_session(instance_id)
+    if not session:
+        return jsonify({"error": "Sessão não encontrada."}), 404
+
+    gdb_instance = session["gdb_instance"]
+
+    # Renderiza o template da seção hex
+    return render_template("sections/hex.html")
+
+
+@app.route("/section/hex/<string:instance_id>/<subsection>")
+def load_hex_subsection(instance_id, subsection):
+    session = GDBManager.get_session(instance_id)
+    if not session:
+        return jsonify({"error": "Sessão não encontrada."}), 404
+
+    gdb_instance = session["gdb_instance"]
+
+    # Verifica se deve ignorar o cache
+    # ignore_cache = request.args.get('ignore_cache', 'false').lower() == 'true'
+
+    # cache_key = f"{instance_id}_{subsection}"
+    
+    # # Verifica se o cache está disponível e deve ser usado
+    # if not ignore_cache and GDBManager.is_cache_available(cache_key):
+    #     return jsonify(GDBManager.get_cache(cache_key))
+
+    if subsection == "hex-viewer":
+        # Comando para obter dados em hexadecimal
+        address = request.args.get('address', '0x00000000')
+        size = request.args.get('size', '128')  # Exemplo: 128 bytes por padrão
+        command = f"x/{size}x {address}"
+        resp_status, hex_data = gdb_instance.send_command(command)
+        
+        parsed_data = GDB.parse_hex(hex_data)
+        # Armazena no cache
+        # GDBManager.set_cache(cache_key, parsed_data)
+        # else:
+            # return jsonify({"error": "Erro ao obter dados em hexadecimal."}), 500
+
+    elif subsection == "mapping-viewer":
+        # Comando para obter o mapeamento de memória
+        command = "info proc mappings"
+        resp_status, mapping_data = gdb_instance.send_command(command)
+        
+        if resp_status == GDBStatus.SUCCESS:
+            parsed_data = GDB.parse_mappings(mapping_data)
+            # Armazena no cache
+            # GDBManager.set_cache(cache_key, parsed_data)
+        else:
+            return jsonify({"error": "Erro ao obter o mapeamento de memória."}), 500
+
+    else:
+        return jsonify({"error": "Subseção não encontrada."}), 404
+
+    return jsonify(parsed_data)
+
+
 
 
 @app.route("/section/functions/<string:instance_id>/<subsection>")
@@ -146,12 +206,18 @@ def load_functions_subsection(instance_id, subsection):
     if not ignore_cache and GDBManager.is_cache_available(cache_key):
         return jsonify(GDBManager.get_cache(cache_key))
 
-    if subsection == "backtrace":
-        resp_status, backtrace = gdb_instance.send_command("bt")
-        parsed_data = GDB.parse_backtrace(backtrace)
-    elif subsection == "functions":
-        resp_status, functions = gdb_instance.send_command("info functions")
-        parsed_data = GDB.parse_functions(functions)
+    if subsection == "hex_view":
+        address = request.args.get('address', '0x00000000')  # Endereço inicial padrão
+        size = request.args.get('size', '128')  # Tamanho padrão de 128 bytes
+
+        # Comando para exibir dados em hexadecimal no GDB
+        command = f"x/{size}x {address}"
+        resp_status, hex_data = gdb_instance.send_command(command)
+        
+        if resp_status == GDBStatus.SUCCESS:
+            parsed_data = GDB.parse_hex(hex_data)  # Processa os dados hexadecimais
+        else:
+            return jsonify({"error": "Falha ao obter dados hexadecimais."}), 500
     else:
         return jsonify({"error": "Subseção não encontrada."}), 404
 
@@ -159,6 +225,7 @@ def load_functions_subsection(instance_id, subsection):
     GDBManager.set_cache(cache_key, parsed_data)
 
     return jsonify(parsed_data)
+
 
 @app.route("/recive_command/<string:instance_id>", methods=["POST"])
 def recive_commands(instance_id):

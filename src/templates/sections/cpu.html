@@ -1,19 +1,22 @@
 <div class="main-layout">
   <!-- Área de Disassembly -->
   <div class="disassembly" subsectionname="disassembly">
-    <h2>Disassembly</h2>
+    <div class="disassembly-header">
+      <h2>Disassembly</h2>
+      <span class="function-name" id="function-name"></span>
+    </div>
     <div class="disassembly-controls">
-        <input type="number" id="negative-lines" placeholder="Lines before" min="0" disabled>
-        <input type="number" id="positive-lines" placeholder="Lines after" min="0" value="10">
+      <input type="number" id="negative-lines" placeholder="Lines before" min="0" disabled>
+      <input type="number" id="positive-lines" placeholder="Lines after" min="0" value="10">
     </div>
     <div class="disassembly-content" data-section="disassembly">
       <!-- O conteúdo do disassembly será carregado aqui -->
     </div>
     <div class="disassembly-goto">
-        <input type="text" id="goto-address" placeholder="Go to address (0x...)">
-        <button onclick="goToAddress()">Go</button>
+      <input type="text" id="goto-address" placeholder="Go to address (0x...)">
+      <button onclick="goToAddress()">Go</button>
     </div>
-</div>
+  </div>
 
   <!-- Área de Registros -->
   <div class="registers" subsectionname="registers">

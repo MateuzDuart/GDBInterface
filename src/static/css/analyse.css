@@ -162,6 +162,27 @@ body {
   overflow: hidden;
 }
 
+.disassembly-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.disassembly-header h2 {
+  margin: 0;
+  color: #ffcc00;
+}
+
+.function-name {
+  font-size: 18px;
+  color: #f8f8f2;
+  background-color: #444;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+
 .disassembly-content {
   display: flex;
   flex-direction: column;
@@ -687,4 +708,84 @@ h2 {
 
 #address-checkbox {
   margin-left: 5px;
+}
+
+/* ---------- Hex e Mapping---------- */
+
+.hex-viewer {
+  background-color: #333;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.hex-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.hex-table th,
+.hex-table td {
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #444;
+}
+
+.hex-table th {
+  background-color: #444;
+  color: #ffcc00;
+}
+
+.hex-table td {
+  background-color: #1e1e1e;
+  color: #ccc;
+  font-family: 'Courier New', Courier, monospace; /* Estilo de fonte para hexadecimais */
+}
+
+.hex-table .hex-text {
+  text-align: left;
+  padding-left: 10px;
+}
+
+@media screen and (max-width: 800px) {
+  .hex-table td,
+  .hex-table th {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+
+  .hex-table .hex-text {
+    font-size: 12px;
+  }
+}
+
+.mapping-viewer {
+  grid-area: mapping;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 8px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mapping-table th, .mapping-table td {
+  padding: 8px;
+  border: 1px solid #444;
+  text-align: left;
+}
+
+.mapping-table th {
+  background-color: #555;
+  color: #ffcc00;
+}
+
+.mapping-table td {
+  background-color: #1e1e1e;
+  color: #ccc;
+  font-family: 'Courier New', Courier, monospace;
 }

@@ -217,6 +217,7 @@ class GDBManager:
         if session_id in GDBManager.instances:
             gdb_instance = GDBManager.instances[session_id]
             if gdb_instance:
+                # gdb_instance.send_command("quit")
                 GDBManager.close_gdb_pipe(session_id)
 
             session_file = os.path.join(
@@ -336,10 +337,13 @@ class GDB:
         if breakpoints is None:
             breakpoints = []
 
-        disassembly = []
         parsed_output = []
         capture = False
+        function_name = None
         regex_x_instructions = re.compile(r'x/\d+i')
+
+        function_name_pattern = re.compile(r"Dump of assembler code for function ([^:]+):")
+        
 
         # Regex ajustado para capturar ambos os tipos de linhas
         pattern = re.compile(
@@ -351,6 +355,9 @@ class GDB:
 
             # Início da captura de linhas de desassembly
             if not capture and ("Dump of assembler code" in line or regex_x_instructions.search(clean_line)):
+                function_name_match = function_name_pattern.search(clean_line)
+                if function_name_match:
+                    function_name = function_name_match.group(1)
                 capture = True
                 continue
 
@@ -387,7 +394,7 @@ class GDB:
                         ]
                     )
 
-        return parsed_output
+        return {"disassembly": parsed_output, "function_name": function_name}
     
     @staticmethod
     def parse_registers(output):
@@ -482,3 +489,66 @@ class GDB:
                 )
 
         return backtrace
+
+    @staticmethod
+    def parse_hex(output):
+        parsed_output = []
+
+        # Padrão para capturar linhas hexadecimais
+        pattern = re.compile(r"^(0x[0-9a-f]+):\s+((?:[0-9a-f]{2}\s+){16})(.*)$")
+
+        for line in output:
+            clean_line = line.strip('~"').strip()
+
+            match = pattern.match(clean_line)
+            if match:
+                offset = match.group(1)
+                hex_bytes = match.group(2).strip().split()
+                ascii_repr = match.group(3).strip()
+
+                # Adiciona a linha ao parsed_output
+                parsed_output.append({
+                    'offset': offset,
+                    'hexBytes': hex_bytes,
+                    'ascii': ascii_repr
+                })
+
+        return parsed_output
+    
+    @staticmethod
+    def parse_mappings(output):
+        mappings = []
+        parsing_started = False
+
+        for line in output:
+            clean_line = line.strip('\\n').strip('~"\\t').strip()  # Remove os caracteres extras do início e fim
+
+            # Ignorar as linhas que não fazem parte da tabela de mapeamentos
+            if not parsing_started:
+                if clean_line.startswith("Start Addr"):
+                    parsing_started = True
+                continue
+
+            # Ignorar a linha em branco
+            if not clean_line or clean_line.startswith("process") or clean_line.startswith("Mapped address spaces"):
+                continue
+
+            parts = clean_line.split()
+            if len(parts) < 5:
+                continue
+
+            # Construir o dicionário de mapeamento considerando o formato dos dados
+            mapping = {
+                "startAddress": parts[0],
+                "endAddress": parts[1],
+                "size": parts[2],
+                "offset": parts[3],
+                "objfile": " ".join(parts[4:]) if len(parts) > 4 else ""
+            }
+
+            mappings.append(mapping)
+
+        return mappings
+    
+    
+    
