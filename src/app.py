@@ -84,7 +84,6 @@ def load_section(section_name, instance_id):
     else:
         return jsonify({"error": "Seção não encontrada."}), 404
 
-
 @app.route("/section/cpu/<string:instance_id>/<subsection>")
 def load_cpu_subsection(instance_id, subsection):
     session = GDBManager.get_session(instance_id)
@@ -95,11 +94,18 @@ def load_cpu_subsection(instance_id, subsection):
 
     if subsection == "disassembly":
         function_name = request.args.get("function")
+        address = request.args.get("address")
+        neg = int(request.args.get('neg', 0))
+        pos = int(request.args.get('pos', 1))
+
         if function_name:
-            # Se um nome de função for fornecido, desassemblar a função específica
-            command = f"disassemble /m {function_name}"
+            # Desassemblar uma função específica
+            command = f"disassemble {function_name}"
+        elif address:
+            # Desassemblar uma região específica usando endereço e linhas
+            command = f"x/{pos}i {address}"
         else:
-            # Caso contrário, usar o comando padrão
+            # Caso nenhum parâmetro seja fornecido, usar o comando padrão
             command = "disassemble"
 
         resp_status, disassembly = gdb_instance.send_command(command)
@@ -119,7 +125,8 @@ def load_cpu_subsection(instance_id, subsection):
         return jsonify(GDB.parse_stack(stack))
     
     else:
-        return jsonify([])
+        return jsonify({"error": "Subseção não encontrada."}), 404
+
 
 
 @app.route("/section/functions/<string:instance_id>/<subsection>")
@@ -153,7 +160,7 @@ def load_functions_subsection(instance_id, subsection):
 
     return jsonify(parsed_data)
 
-@app.route("/recive_command/<string:instance_id>/", methods=["POST"])
+@app.route("/recive_command/<string:instance_id>", methods=["POST"])
 def recive_commands(instance_id):
     command = request.form.get("command")
     

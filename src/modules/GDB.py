@@ -339,52 +339,56 @@ class GDB:
         disassembly = []
         parsed_output = []
         capture = False
+        regex_x_instructions = re.compile(r'x/\d+i')
+
+        # Regex ajustado para capturar ambos os tipos de linhas
+        pattern = re.compile(
+            r"^(=> )?(0x[0-9a-f]+)\s+<([^>]+)>:\s*(.*)$"
+        )
 
         for line in output:
-            if not capture and "Dump of assembler code" in line:
+            clean_line = line.strip('~"').strip()
+
+            # Início da captura de linhas de desassembly
+            if not capture and ("Dump of assembler code" in line or regex_x_instructions.search(clean_line)):
                 capture = True
                 continue
+
+            # Fim da captura
             if "End of assembler dump" in line:
                 break
+
             if capture:
-                clean_line = line.strip('~"').strip()
-                disassembly.append(clean_line)
+                match = pattern.match(clean_line)
+                if match:
+                    indicator = match.group(1) or ""
+                    address = match.group(2)
+                    function_info = match.group(3)
+                    instruction_line = match.group(4).replace("\\t", " ").replace("\\n", "").strip()
+                    
+                    parts = instruction_line.split(" ", 1)
+                    instruction = parts[0]
+                    arguments = parts[1] if len(parts) > 1 else ""
 
-        if not disassembly:
-            return []
+                    # Verifica se o endereço atual é um breakpoint
+                    is_breakpoint = address in breakpoints
 
-        pattern = re.compile(r"^(=> )?(0x[0-9a-f]+) <(\+\d+)>:\s*(.*)$")
-        for line in disassembly:
-            match = pattern.match(line)
-            if match:
-                indicator = match.group(1) or ""
-                address = match.group(2)
-                offset = match.group(3)
-                instruction_line = (
-                    match.group(4).replace("\\t", " ").replace("\\n", "").strip()
-                )
-                parts = instruction_line.split(" ", 1)
-                instruction = parts[0]
-                arguments = parts[1] if len(parts) > 1 else ""
+                    # Verifica se é a linha atual
+                    is_current_line = bool(indicator)
 
-                # Verifica se o endereço atual é um breakpoint
-                is_breakpoint = address in breakpoints
+                    parsed_output.append(
+                        [
+                            is_current_line,
+                            is_breakpoint,
+                            address,
+                            function_info,
+                            instruction,
+                            arguments,
+                        ]
+                    )
 
-                # Verifica se é a linha atual
-                is_current_line = bool(indicator)
-
-                parsed_output.append(
-                    [
-                        is_current_line,
-                        is_breakpoint,
-                        address,
-                        offset,
-                        instruction,
-                        arguments,
-                    ]
-                )
         return parsed_output
-
+    
     @staticmethod
     def parse_registers(output):
         registers = []

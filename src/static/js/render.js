@@ -27,7 +27,7 @@ function renderSection(section) {
     setCookie("section_name", section)
     const instanceId = getSessionCookie();
     const url = `/section/${section}/${instanceId}`;
-    
+
     fetch(url)
         .then(response => {
             if (response.ok) {
@@ -38,7 +38,7 @@ function renderSection(section) {
             const renderArea = document.getElementById('render-area');
             renderArea.innerHTML = data;
             const subsections = renderArea.querySelectorAll(".main-layout > div");
-            
+
             updateStatus(true)
             activeSubsections.length = 0
             subsections.forEach((subsection) => {
@@ -143,7 +143,7 @@ function filterFunctions(inputElement) {
     const filterContainer = inputElement.parentElement; // O container pai do input
     const searchByAddress = filterContainer.querySelector('#address-checkbox').checked; // O estado do checkbox
     const functions = document.querySelectorAll('.function-line');
-    
+
     functions.forEach(func => {
         const functionName = func.querySelector('.function-name').textContent.toLowerCase();
         const functionAddress = func.querySelector('.function-address').textContent.toLowerCase();
@@ -174,20 +174,48 @@ function renderDisassembly(data) {
         const isCurrentLine = line[0];
         const isBreakpoint = line[1];
 
+        // Limitar o tamanho do offset e arguments
+        const maxOffsetLength = 5; // Limite para o offset
+        const maxArgumentsLength = 50; // Limite para arguments
+
+        let offset = line[3];
+        let argumentsText = line[5];
+
+        // Ajusta o tamanho do offset
+        let displayOffset = offset;
+        if (offset.length > maxOffsetLength) {
+            displayOffset = offset.slice(0, maxOffsetLength) + '...';
+        }
+
+        // Ajusta o tamanho dos argumentos
+        let displayArguments = argumentsText;
+        if (argumentsText.length > maxArgumentsLength) {
+            displayArguments = argumentsText.slice(0, maxArgumentsLength) + '...';
+        }
+
         div.innerHTML = `
             <span class="address ${isCurrentLine ? 'highlight' : ''} ${isBreakpoint ? 'breakpoint' : ''}" data-address="${line[2]}">${line[2]}</span>
-            <span class="offset">${line[3]}</span>
+            <span class="offset" title="${offset}">${displayOffset}</span>
             <span class="instruction">${line[4]}</span> 
-            <span class="arguments">${line[5]}</span>
+            <span class="arguments" title="${argumentsText}">${displayArguments}</span>
         `;
 
         disassemblyContent.appendChild(div);
 
         // Adicionar event listener ao endereço para gerenciar breakpoints
         const addressElement = div.querySelector('.address');
-        addressElement.addEventListener('dblclick', function () {
+
+        function handleBreakpointToggle() {
             toggleBreakpoint(addressElement);
-        });
+        }
+
+        addressElement.addEventListener('dblclick', handleBreakpointToggle);
+
+        // Para dispositivos móveis, onde "dblclick" não funciona bem
+        addressElement.addEventListener('touchstart', function (event) {
+            event.preventDefault(); // Evita comportamentos padrões como zoom duplo
+            handleBreakpointToggle();
+        }, { passive: true });
     });
 }
 
@@ -231,18 +259,18 @@ function renderStack(data) {
 function renderFunctions(data) {
     const functionsContent = document.querySelector('.functions-content');
     functionsContent.innerHTML = ''; // Limpa o conteúdo anterior
-    
+
     data.forEach(func => {
         const escapedName = escapeHTML(func.name); // Escapa os caracteres especiais
         const display_name = func.name.length > 30 ? escapedName.slice(0, 30) + '...' : escapedName;
-        
+
         const div = document.createElement('div');
         div.className = 'function-line';
         div.innerHTML = `
             <span class="function-name" data-full-name="${escapedName}">${display_name}</span>
             <span class="function-address">${func.address}</span>
         `;
-        
+
         // Adiciona o event listener de duplo clique
         div.addEventListener('dblclick', () => {
             loadDisassemblyForFunction(func.name);

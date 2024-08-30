@@ -14,6 +14,41 @@ body {
     box-sizing: border-box;
 }
 
+/* ---------- Estilização das Barras de Rolagem ---------- */
+
+::-webkit-scrollbar {
+  width: 12px; /* Largura da barra de rolagem */
+  height: 12px; /* Altura da barra de rolagem para elementos horizontais */
+}
+
+::-webkit-scrollbar-track {
+  background: #333; /* Cor de fundo da barra de rolagem */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #ffcc00; /* Cor da parte deslizante da barra */
+  border-radius: 8px;
+  border: 3px solid #1e1e1e; /* Linha amarela com borda */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #ffcc00; /* Cor quando o usuário passa o mouse */
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #ffaa00; /* Cor quando a barra está sendo clicada */
+}
+
+::-webkit-scrollbar-corner {
+  background: #333; /* Cor do canto onde as barras de rolagem horizontal e vertical se encontram */
+}
+
+/* Para navegadores que suportam scrollbar-gutter */
+.scrollbar-gutter-stable {
+  scrollbar-gutter: stable both-edges; /* Espaço extra para barras de rolagem para não sobrepor o conteúdo */
+}
+
 /* ---------- Cabeçalho (Header) ---------- */
 
 .header {
@@ -26,6 +61,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap; /* Adicionado para melhor responsividade */
 }
 
 .status-indicator {
@@ -66,40 +102,23 @@ body {
   background-color: #666;
 }
 
+/* Ajuste os botões de controle de depuração para telas pequenas */
+@media (max-width: 800px) {
+  .debug-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px; /* Espaçamento entre os botões */
+  }
+  
+  .debug-controls button {
+    flex: 1 1 calc(50% - 10px); /* Cada botão ocupa metade da largura */
+    margin: 5px 0; /* Espaçamento vertical */
+  }
+}
+
 /* ---------- Estilização das Barras de Rolagem ---------- */
 
-::-webkit-scrollbar {
-  width: 12px; /* Largura da barra de rolagem */
-  height: 12px; /* Altura da barra de rolagem para elementos horizontais */
-}
-
-::-webkit-scrollbar-track {
-  background: #333; /* Cor de fundo da barra de rolagem */
-  border-radius: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #ffcc00; /* Cor da parte deslizante da barra */
-  border-radius: 8px;
-  border: 3px solid #1e1e1e; /* Linha amarela com borda */
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: #ffcc00; /* Cor quando o usuário passa o mouse */
-}
-
-::-webkit-scrollbar-thumb:active {
-  background-color: #ffaa00; /* Cor quando a barra está sendo clicada */
-}
-
-::-webkit-scrollbar-corner {
-  background: #333; /* Cor do canto onde as barras de rolagem horizontal e vertical se encontram */
-}
-
-/* Para navegadores que suportam scrollbar-gutter */
-.scrollbar-gutter-stable {
-  scrollbar-gutter: stable both-edges; /* Espaço extra para barras de rolagem para não sobrepor o conteúdo */
-}
+/* ... (manter como está) ... */
 
 /* ---------- Layout da Página de Análise (analyse page) ---------- */
 
@@ -122,43 +141,25 @@ body {
   margin-top: 20px;
 }
 
-h2  {
-  cursor: pointer;
-}
-
-h2::before {
-  content: '';
-  display: inline-block;
-  width: 15px;
-  height: 15px;
-  background-color: #161616;
-  border-radius: 50%;
-  margin-right: 8px; /* Espaçamento entre a bolinha e o texto */
-  margin-bottom: 1px;
-}
-
-h2.active::before {
-  background-color: #ffcc00;
-  animation: blink 1.7s infinite; /* Animação com duração de 2 segundos que se repete infinitamente */
-}
-
-@keyframes blink {
-  0%, 100% {
-    opacity: 1; /* Visível */
-  }
-  50% {
-    opacity: 0; /* Invisível no meio da animação */
+@media (max-width: 800px) {
+  .main-layout {
+    grid-template-areas: 
+        "disassembly"
+        "registers"
+        "memory"
+        "stack";
+    grid-template-columns: 1fr; /* Alinha todas as áreas verticalmente */
   }
 }
 
-/* ---------- Seção de Desassembly ---------- */
+/* ---------- Seção de Disassembly ---------- */
 
 .disassembly {
   grid-area: disassembly;
   background-color: #333;
   padding: 10px;
   border-radius: 8px;
-  overflow: hidden; /* Adiciona este estilo para garantir que o conteúdo não exceda os limites */
+  overflow: hidden;
 }
 
 .disassembly-content {
@@ -168,22 +169,75 @@ h2.active::before {
   padding: 10px;
   border-radius: 8px;
   overflow-y: auto;
+  overflow-x: auto; /* Adiciona scroll lateral */
   max-height: 400px;
-  max-width: 100%; /* Adicione esta linha */
-  white-space: pre;
-}
-.disassembly-line {
-  margin-bottom: 2px;
-  display: flex;
-  align-items: baseline;
-  color: #ccc;
+  max-width: 100%;
+  white-space: nowrap; /* Garante que o conteúdo não quebre a linha */
 }
 
-.disassembly-line .address {
+
+/* Ajuste do disassembly-line para melhor responsividade */
+.disassembly-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  padding: 2px 0;
+  margin-bottom: 2px;
+  color: #ccc;
+  font-family: monospace;
+}
+
+.disassembly-line .offset {
+  min-width: 50px;
+  max-width: 50px;
+  color: #a6e22e;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.disassembly-line .instruction {
+  min-width: 60px;
+  max-width: 60px;
+  color: #f92672;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.disassembly-line .arguments {
+  flex-grow: 1;
+  margin-left: 10px;
+  color: #f8f8f2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 220px); /* Ajusta o tamanho com base nas outras colunas */
+  position: relative;
+}
+
+.disassembly-line .arguments:hover::after {
+  content: attr(title);
+  position: absolute;
+  background-color: #333;
+  color: #fff;
+  padding: 5px;
+  border-radius: 4px;
+  white-space: normal;
+  z-index: 10;
+  left: 0;
+  top: 100%;
+  transform: translateY(5px);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  max-width: 400px;
+}
+
+.address {
   min-width: 100px;
   color: #66d9ef;
   background-color: transparent;
-  padding: 0 5px;
   cursor: pointer;
 }
 
@@ -206,22 +260,105 @@ h2.active::before {
   border-radius: 4px;
 }
 
-.disassembly-line .offset {
+.offset {
   color: #a6e22e;
   margin-left: 10px;
-  min-width: 30px;
+  min-width: 50px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+
+.instruction {
+  color: #f92672;
+  margin-left: 15px;
+  min-width: 60px;
+  text-align: left;
+}
+
+.arguments {
+  color: #f8f8f2;
+  margin-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+  cursor: pointer;
+  position: relative;
+}
+
+.disassembly {
+  grid-area: disassembly;
+  background-color: #333;
+  padding: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+
+.disassembly-controls input {
+  margin-right: 10px;
+  padding: 5px;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  color: #ccc;
+  border-radius: 4px;
+  width: 120px;
   text-align: center;
 }
 
-.disassembly-line .instruction {
-  color: #f92672;
-  margin-left: 15px;
-  min-width: 50px;
+.disassembly-goto {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
 }
 
-.disassembly-line .arguments {
-  color: #f8f8f2;
-  margin-left: 10px;
+.disassembly-goto input {
+  padding: 5px;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  color: #ccc;
+  border-radius: 4px;
+  width: calc(100% - 70px); /* Subtracting the width of the button */
+  margin-right: 10px;
+}
+
+.disassembly-goto button {
+  padding: 5px 10px;
+  background-color: #444;
+  color: #ccc;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.disassembly-goto button:hover {
+  background-color: #555;
+}
+
+.disassembly-goto button:active {
+  background-color: #666;
+}
+/* Ajuste dos controles de disassembly para telas menores */
+@media (max-width: 800px) {
+  .disassembly-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .disassembly-controls input {
+    margin-bottom: 10px;
+    width: 100%;
+  }
+  
+  .disassembly-goto input {
+    width: calc(100% - 70px); /* Subtrai a largura do botão */
+  }
 }
 
 /* ---------- Seção de Registradores ---------- */
@@ -238,8 +375,8 @@ h2.active::before {
   padding: 10px;
   border-radius: 8px;
   overflow-y: auto;
-  max-height: 400px; /* Define o tamanho máximo antes de aparecer a barra de rolagem */
-  height: auto; /* Permite que o container cresça dinamicamente */
+  max-height: 400px;
+  height: auto;
 }
 
 /* ---------- Estilização Geral de Tabelas ---------- */
@@ -249,13 +386,10 @@ table {
   border-collapse: collapse;
 }
 
-table, th, td {
-  border: 1px solid #444;
-}
-
 th, td {
   padding: 8px;
   text-align: left;
+  border: 1px solid #444;
 }
 
 th {
@@ -286,7 +420,7 @@ td {
   padding: 10px;
   border-radius: 8px;
   overflow-x: auto;
-  max-height: 300px; /* Define o tamanho máximo antes de aparecer a barra de rolagem */
+  max-height: 300px;
   position: relative;
 }
 
@@ -311,17 +445,17 @@ td {
 }
 
 .memory-content td, .stack-content td {
-  font-family: 'Courier New', Courier, monospace; /* Font para estilo de código */
+  font-family: 'Courier New', Courier, monospace;
   background-color: #1e1e1e;
   color: #ccc;
 }
 
 .memory-content .hexadecimal {
-  color: #66d9ef; /* Cor dos dados hexadecimais */
+  color: #66d9ef;
 }
 
 .memory-content .ascii {
-  color: #a6e22e; /* Cor dos dados ASCII */
+  color: #a6e22e;
 }
 
 .stack-content {
@@ -330,8 +464,9 @@ td {
   padding: 10px;
   border-radius: 8px;
   overflow-x: auto;
-  max-height: 300px; /* Define o tamanho máximo antes de aparecer a barra de rolagem */
+  max-height: 300px;
 }
+
 /* ---------- Títulos de Seções ---------- */
 
 h2 {
@@ -377,6 +512,23 @@ h2 {
 
 .function-address {
   color: #f92672;
+}
+
+/* Ajuste para layouts responsivos */
+
+@media (max-width: 800px) {
+  .function-line {
+    flex-wrap: wrap;
+  }
+  
+  .function-name {
+    max-width: 100%;
+  }
+  
+  .function-address {
+    text-align: right;
+    width: 100%;
+  }
 }
 
 /* ---------- Estilos para a Lista de Backtrace ---------- */

@@ -113,3 +113,23 @@ function loadDisassemblyForFunction(functionName) {
         .catch(error => console.error('Erro ao carregar o disassembly:', error));
 }
 
+function goToAddress() {
+    const address = document.getElementById('goto-address').value;
+    const negativeLines = document.getElementById('negative-lines').value || 0;
+    const positiveLines = document.getElementById('positive-lines').value || 0;
+
+    if (!address.startsWith("0x") || isNaN(parseInt(address, 16))) {
+        alert("Please enter a valid hexadecimal address (e.g., 0x400080).");
+        return;
+    }
+
+    const instanceId = getSessionCookie();
+    const url = `/section/cpu/${instanceId}/disassembly?address=${encodeURIComponent(address)}&neg=${negativeLines}&pos=${positiveLines}`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            renderDisassembly(data);
+        })
+        .catch(error => console.error('Erro ao carregar o disassembly:', error));
+}
