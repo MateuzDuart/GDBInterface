@@ -24,7 +24,6 @@
                 <div class="status-box" id="status-box"></div>
                 <span id="status-text">Paused</span>
             </div>
-            
 
             <div class="debug-controls">
                 <button onclick="restartGDB()">Restart (F2)</button>
@@ -39,6 +38,23 @@
     </div>
 
     <div class="container" id="render-area"></div>
+
+    <!-- Terminal na parte inferior da página -->
+    <div id="terminal">
+        <div class="terminal-header">
+            <button onclick="clearTerminal()">Clear Terminal</button>
+            <button onclick="toggleTerminal()">Close Terminal</button>
+        </div>
+        <div class="terminal-output" id="terminal-output"></div>
+        <div class="terminal-input">
+            <input type="text" id="gdb-command-input" placeholder="Enter GDB Command" onkeydown="if(event.key === 'Enter') executeGDBCommand()">
+            <button onclick="executeGDBCommand()">Send</button>
+        </div>
+    </div>
+
+    <!-- Botão fixo para abrir o terminal -->
+    <button id="terminal-toggle-btn" onclick="toggleTerminal()">Terminal</button>
 </body>
+
 
 </html>

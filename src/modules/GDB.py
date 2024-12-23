@@ -332,6 +332,29 @@ class GDB:
                 self.gdb_process.terminate()
                 self.gdb_process = None
 
+    def send_direct_command(self, command):
+        try:
+            if not self.gdb_process or self.gdb_process.stdin is None:
+                raise Exception("GDB process is not running or has been terminated. Please start the process first.")
+
+            with self.lock:
+                # Enviar o comando diretamente para o GDB e capturar a resposta
+                self.gdb_process.stdin.write(command + '\n')
+                self.gdb_process.stdin.flush()
+
+                # Ler a saída do GDB
+                output = []
+                while True:
+                    line = self.gdb_process.stdout.readline().strip()
+                    if "(gdb)" in line or line == "":
+                        break
+                    output.append(line)
+
+                return GDBStatus.SUCCESS, "\n".join(output)
+
+        except Exception as e:
+            return GDBStatus.ERROR, str(e)
+    
     @staticmethod
     def parse_disassembly(output, breakpoints=None):
         if breakpoints is None:

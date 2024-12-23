@@ -45,7 +45,7 @@ function renderSection(section) {
                 const subsectionName = subsection.getAttribute('subsectionname');
                 loadSectionData(section, subsectionName);
 
-                const headerElement = subsection.children[0];
+                const headerElement = subsection.querySelector("h2");
 
                 toggleSubsection(headerElement);
                 headerElement.onclick = function () {
@@ -106,6 +106,9 @@ function toggleSubsection(headerElement) {
         const index = activeSubsections.indexOf(subsectionName);
         activeSubsections.splice(index, 1);
     } else {
+        if(!subsectionName){
+            return activeSubsections.push(headerElement.parentElement.parentElement.getAttribute('subsectionname'));
+        }
         activeSubsections.push(subsectionName);
     }
 }
@@ -189,6 +192,54 @@ function loadHexViewerForAddress(address, size) {
         })
         .catch(error => console.error('Erro ao carregar o Hex Viewer:', error));
 }
+
+function clearTerminal() {
+    document.getElementById('terminal-output').innerHTML = '';
+}
+
+
+
+function toggleTerminal() {
+    const terminal = document.getElementById('terminal');
+    const terminalToggleBtn = document.getElementById('terminal-toggle-btn');
+    if (terminal.style.display === 'none' || terminal.style.display === '') {
+        terminal.style.display = 'flex';
+        terminalToggleBtn.style.display = 'none'; // Esconde o botão de alternância
+    } else {
+        terminal.style.display = 'none';
+        terminalToggleBtn.style.display = 'block'; // Mostra o botão de alternância
+    }
+}
+
+
+function displayGDBResponse(response) {
+    const terminalOutput = document.getElementById('terminal-output');
+
+    // Limpa a string de resposta e divide-a em linhas
+    const lines = response.trim().split('\n');
+
+    // Processa cada linha individualmente
+    lines.forEach(line => {
+        // Remove caracteres de controle (como &" e ^) e tags de mensagem como "msg="
+        line = line.replace(/^&"|"$/g, '').replace(/^~"|"$/g, '').replace(/^"msg="/, '');
+
+        // Verifica o tipo de linha e formata de acordo
+        if (line.startsWith('^error')) {
+            line = line.replace('^error,msg=', 'Error: '); // Marca a linha como erro
+            terminalOutput.innerHTML += `<div style="color: #ff5555;">${line}</div>`;
+        } else if (line.startsWith('^done')) {
+            line = line.replace('^done', 'Done: '); // Marca a linha como comando finalizado
+            terminalOutput.innerHTML += `<div style="color: #55ff55;">${line}</div>`;
+        } else {
+            // Linha normal, apenas imprime
+            terminalOutput.innerHTML += `<div>${line}</div>`;
+        }
+    });
+
+    // Rolagem automática para a última linha
+    terminalOutput.scrollTop = terminalOutput.scrollHeight;
+}
+
 // ------- render functions -----------
 
 function renderDisassembly(data) {

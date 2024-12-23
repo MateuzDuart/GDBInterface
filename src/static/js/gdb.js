@@ -133,3 +133,33 @@ function goToAddress() {
         })
         .catch(error => console.error('Erro ao carregar o disassembly:', error));
 }
+
+
+function executeGDBCommand() {
+    const commandInput = document.getElementById('gdb-command-input');
+    const command = commandInput.value.trim();
+    
+    if (command) {
+        sendGDBCommand(command)
+            .then(response => {
+                displayGDBResponse(response);
+                commandInput.value = ''; // Limpa o input após o envio
+            })
+            .catch(error => {
+                displayGDBResponse('Error: ' + error.message);
+            });
+    }
+}
+
+function sendGDBCommand(command) {
+    const instanceId = getSessionCookie();
+    return fetch(`/gdb/command/${instanceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ command: command })
+    })
+    .then(response => response.json())
+    .then(data => data.response || 'No response from GDB.');
+}

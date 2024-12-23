@@ -312,5 +312,27 @@ def manage_breakpoints(instance_id):
         else:
             return jsonify({"status": "error", "output": output})  
 
+@app.route("/gdb/command/<string:instance_id>", methods=["POST"])
+def execute_gdb_command(instance_id):
+    session = GDBManager.get_session(instance_id)
+    if not session:
+        return jsonify({"error": "Sessão não encontrada."}), 404
+
+    gdb_instance = session["gdb_instance"]
+
+    # Obter o comando enviado pelo usuário
+    command = request.json.get("command", "")
+    if not command:
+        return jsonify({"error": "Comando não fornecido."}), 400
+
+    # Enviar o comando para o GDB e obter a resposta
+    resp_status, response = gdb_instance.send_direct_command(command)
+    
+    # if resp_status != "OK":
+    #     return jsonify({"error": "Erro ao executar o comando no GDB."}), 500
+
+    return jsonify({"response": response})
+
+
 if __name__ == "__main__":
     app.run(debug=True)
